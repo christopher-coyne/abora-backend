@@ -4,12 +4,27 @@ import cors from 'cors';
 import session from 'express-session';
 import passport from 'passport';
 import passportGoogle from 'passport-google-oauth20';
+import AWS from 'aws-sdk';
+// import { DynamoDBClient, BatchExecuteStatementCommand } from "@aws-sdk/client-dynamodb"
+// import { ScanCommand } from "@aws-sdk/lib-dynamodb";
+// const client = new DynamoDBClient({ region: "REGION" });
+
+import asyncHandler from 'express-async-handler';
 
 const GoogleStrategy = passportGoogle.Strategy;
-
 dotenv.config();
 
+AWS.config.update({
+  region: process.env.AWS_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
+
 const app = express();
+
+// const dynamodb = new AWS.DynamoDB();
+const db = new AWS.DynamoDB();
+
 const port = process.env.PORT;
 
 app.use(express.json());
@@ -64,9 +79,22 @@ app.get('/', (req, res) => {
   res.send('Express + TypeScript Server');
 });
 
-app.get('/', (req, res) => {
-  res.send('Express + TypeScript Server');
-});
+app.get(
+  '/test-db',
+  asyncHandler(async (req, res) => {
+    try {
+      const tableName = process.env.TABLE_POSTS;
+
+      if (tableName) {
+        const response = await db.scan({ TableName: tableName! }).promise();
+        console.log('response ', response);
+        res.json(response.Items);
+      }
+    } catch (error) {
+      res.status(500).json({ error: error });
+    }
+  })
+);
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
