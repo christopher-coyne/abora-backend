@@ -1,0 +1,8 @@
+services:
+  abora-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abora-server
+    ports:
+      - 4000:4000
